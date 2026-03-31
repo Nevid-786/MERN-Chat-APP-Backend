@@ -5,6 +5,7 @@ import { ConnecToDB } from "./config/db.js";
 import { ConnectRedisClient } from "./config/Redis.js";
 import { connectToRabbitMq } from "./config/RabbitMq.js";
 import userRouter from "./routes/userRoutes.js";
+import cookieParser from "cookie-parser";
 
 
 //important start
@@ -12,6 +13,7 @@ const app = express();
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 app.use(express.json());
+app.use(cookieParser())
 
 
 //important End

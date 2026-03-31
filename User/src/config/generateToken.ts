@@ -8,7 +8,7 @@ function generateToken(user:any){
         console.log("No JWT Secret")
     }
     return jwt.sign(
-        user,
+        { _id: user._id, email: user.email,name:user.name },
         Secret as string,
         {expiresIn:"1h"}
        
