@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "User Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/User"
+      },
+      "isBackground": true,
+      "presentation": {
+        "panel": "new",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Chats Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/Chats"
+      },
+      "isBackground": true,
+      "presentation": {
+        "panel": "new",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mails Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/Mail"
+      },
+      "isBackground": true,
+      "presentation": {
+        "panel": "new",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run All",
+      "dependsOn": ["User Server", "Chats Server", "Mails Server"],
+      "dependsOrder": "parallel"
+    }
+  ]
+}
