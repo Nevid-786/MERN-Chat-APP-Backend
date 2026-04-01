@@ -8,3 +8,19 @@ latestMessage:{
 }
 
 }
+
+
+
+const schema= new Schema<IChat>({
+    users:[{
+        type:String,
+
+    }],
+    latestMessage:{
+    text:{String},
+    sender:{String}
+}
+}
+,{
+    timestamps:true
+})
