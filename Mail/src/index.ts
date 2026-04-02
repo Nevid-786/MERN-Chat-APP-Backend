@@ -19,7 +19,7 @@ connectToRabbitMq().then(()=>{
 
  app.listen(PORT, () => {
           console.log(
-            `User Server Started:http://localhost:${process.env.PORT}`,
+            `Mail Server Started:http://localhost:${process.env.PORT}`,
           );
         });
 

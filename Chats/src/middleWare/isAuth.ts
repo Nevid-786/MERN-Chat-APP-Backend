@@ -1,6 +1,6 @@
 import type { NextFunction,Response,Request} from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken"
-import type { IUser } from "../model/User.js";
+
 
 export interface AuthenticatedRequest extends Request {
     user?: {
@@ -22,7 +22,7 @@ const isAuth=(req:AuthenticatedRequest,res:Response,next:NextFunction)=>{
 
         }
         const token =authHeader.split(" ")[1];
-        // console.log(token);
+        console.log(token);
 
          const decodedValue:any=jwt.verify(token as string,
                   process.env.JWT_SECRET as string

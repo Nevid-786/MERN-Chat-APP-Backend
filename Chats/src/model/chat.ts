@@ -1,6 +1,7 @@
-import { Document ,Schema} from "mongoose";
+import { Document ,model,Schema, Types} from "mongoose";
 
 export interface IChat extends Document{
+    
 users:string[];
 latestMessage:{
     text:string;
@@ -8,8 +9,6 @@ latestMessage:{
 }
 
 }
-
-
 
 const schema= new Schema<IChat>({
     users:[{
@@ -24,3 +23,5 @@ const schema= new Schema<IChat>({
 ,{
     timestamps:true
 })
+
+export default model<IChat>("Chat",schema);

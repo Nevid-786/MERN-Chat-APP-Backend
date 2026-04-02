@@ -1,4 +1,4 @@
-import { get } from "mongoose";
+import mongoose, { get } from "mongoose";
 import generateToken from "../config/generateToken.js";
 import { publishToQueue } from "../config/RabbitMq.js";
 import { getRedisClient } from "../config/Redis.js";
@@ -162,13 +162,31 @@ export const getAllUser = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
 
 
 export const getUserById = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
- const _id= req.params;
- const user = await User.findOne({ _id: _id });
-  if (!user) {
-    res.status(400).json({
-      message: "No user found",
+try {
+  console.log(req.params._id)
+   const _id= req.params._id as string;
+     if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(400).json({
+      message: "Invalid user ID",
     });
   }
+   const user = await User.findOne({ _id: _id });
+    if (!user) {
+      res.status(400).json({
+        message: "No user found",
+      });
+    }
 
-  res.json(user);
+
+
+
+
+    
+  res.json({user});
+} catch (err) {
+  console.log(err);
+ 
+  
+}
+
 });
