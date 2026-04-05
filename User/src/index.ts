@@ -6,6 +6,7 @@ import { ConnectRedisClient } from "./config/Redis.js";
 import { connectToRabbitMq } from "./config/RabbitMq.js";
 import userRouter from "./routes/userRoutes.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 
 //important start
@@ -14,6 +15,10 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cookieParser())
+app.use(cors({
+  origin:["*","http://localhost:5173","*"],
+  credentials:true,
+}));
 
 
 //important End
@@ -51,6 +56,14 @@ app.use("/", (req, res) => {
 connectToRabbitMq().then(()=>{
     console.log("RabbitMq connected")
 })
+process.on("uncaughtException", (err) => {
+  console.error("💥 Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("💥 Unhandled Rejection:", err);
+});
+
 
 ConnectRedisClient()
   .then(() => {

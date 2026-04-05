@@ -7,6 +7,8 @@ import { TRY_CATCH } from "./Try_Catch.js";
 import type { AuthenticatedRequest } from "../middleware/isAuth.js";
 
 export const postLogin = TRY_CATCH(async (req, res) => {
+ 
+//  console.log("Login Route:",req.body)
   const RedisClient = getRedisClient();
 
   if (!RedisClient) {
@@ -15,8 +17,10 @@ export const postLogin = TRY_CATCH(async (req, res) => {
     });
   }
 
+
+
   //
-  // console.log("Login Route:",req.body)
+  console.log("Login Route:",req.body)
   const { email } = req.body;
   const otpKey = `otp:${email}`;
   const otpRateLimitKey = `rateLimitOtp:${email}`;
@@ -59,6 +63,7 @@ export const postLogin = TRY_CATCH(async (req, res) => {
   });
 });
 
+
 //Register User
 export const postRegisterUser = TRY_CATCH(async (req, res, next) => {
   const { name, email } = req.body;
@@ -97,7 +102,7 @@ export const VerifyUser = TRY_CATCH(async (req, res) => {
   }
 
   const { otp, email } = req.body;
-  if (!otp || !email) {
+  if (!otp || !email || email.trim() === "" || otp.trim() === "") {
     return res.status(400).json({
       message: "Bad Parameter and Request",
     });

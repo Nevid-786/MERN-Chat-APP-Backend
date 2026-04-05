@@ -114,8 +114,8 @@ export const sendMessage = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
 
 
 
-  // const imageFile=req.file;
-  if (!text) {
+  const imageFile=req.file;
+  if (!text && !imageFile) {
     return res.status(400).json({
       message: "atleast there must be text or image",
     });
@@ -142,10 +142,10 @@ export const sendMessage = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
     messageType: "text",
   };
 
-  // if(imageFile){
-  //     messageData.messageType="image"
-  // latestMessagetext="image";
-  // }else{}
+  if(imageFile){
+      messageData.messageType="image"
+  latestMessagetext="image";
+  }else{}
 
     messageData.text=text;
 
@@ -165,7 +165,7 @@ export const sendMessage = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
     },
   );
 res.json({
-    message:message,senderId
+    message:message,senderId,updatedChat
 
 })
 
@@ -174,3 +174,88 @@ res.json({
 
 
 });
+
+
+export const getMessagesbyChatId = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
+      const userId=req.user?._id;
+     const chatId=req.params.id;
+     console.log("GetessageRoute:",req.params.id,"\n");
+    if(!userId){
+      return res.status(401).json({
+        message:"Unauthorize"
+      })
+    }
+    
+    if(!chatId){
+      res.status(400).json({
+        message:"chat id required"
+      })
+      return
+    }
+  const Chat=await chat.findById(chatId);
+   
+    if(!Chat){
+      res.status(404).json({
+        message:"chat not found"
+      })
+      return
+    }
+
+    const isUserInChat= Chat.users.some((user)=> user.toString()===userId.toString());
+    if(!isUserInChat) return res.status(403).json({message: "You are not part of this conversation"})
+
+const otherUserId=Chat.users.filter((user)=> user!==userId)[0]?.toString().trim();
+console.log("other get message:", otherUserId);
+try {
+
+  const token = req.cookies.accessToken
+  console.log(token)
+ 
+const { data } = await axios.get(
+        `${process.env.USER_SERVICE}/api/user/${otherUserId}`,
+        {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      console.log(data.user);
+
+
+
+      await Message.updateMany({
+        chatId:chatId,
+        sender:{$ne:userId},
+        seen:false
+      },{ seen:true,seenAt:new Date()}
+   
+  )
+  const messages= await Message.find({
+    chatId:chatId
+  }).sort({updatedAt:1});
+
+
+  res.status(200).json({
+    messages:messages,
+    otherUser:{
+      _id:data.user._id,
+      name:data.user.name,
+      email:data.user.email,
+    }
+  })
+
+
+} catch (error :any) {
+  console.log(error);
+  res.status(400).json({
+    message:error.response.data.message||error,
+  })
+  
+}
+
+
+
+
+
+}
+);
