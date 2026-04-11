@@ -24,16 +24,17 @@ export const postLogin = TRY_CATCH(async (req, res) => {
   const { email } = req.body;
   const otpKey = `otp:${email}`;
   const otpRateLimitKey = `rateLimitOtp:${email}`;
+  console.log("Login Route:",email)
 
   if (!email) {
-    res.json({
+    res.status(400).json({
       message: "Send Correct Email",
     });
     return;
   }
   const user = await User.findOne({ email: email });
   if (!user) {
-    return res.json({
+    return res.status(400).json({
       message: "No User Found with this Gmail",
     });
   }
@@ -195,3 +196,16 @@ try {
 }
 
 });
+
+
+export const logoutUser = TRY_CATCH(async (req, res) => {
+  res
+    .clearCookie("accessToken", {
+      httpOnly: true,
+      
+    })
+    .json({
+      message: "Logged out successfully",
+    });
+}
+);

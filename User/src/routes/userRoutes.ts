@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllUser, getMyProfile, getUserById, postLogin, postRegisterUser, VerifyUser } from "../Controller/userController.js";
+import { getAllUser, getMyProfile, getUserById, logoutUser, postLogin, postRegisterUser, VerifyUser } from "../Controller/userController.js";
 import isAuth from "../middleware/isAuth.js";
 
 
@@ -12,6 +12,8 @@ userRouter.post("/verify",VerifyUser);
 userRouter.get("/me",isAuth,getMyProfile);
 userRouter.get("/getalluser",isAuth,getAllUser);
 userRouter.get("/user/:_id",isAuth,getUserById);
+userRouter.get("/logout",isAuth,logoutUser);
+
 
 
 export default userRouter;

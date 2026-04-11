@@ -14,6 +14,7 @@ ChatRoutes.post("/newChat",isAuth,createNewChat);
 ChatRoutes.get("/allChats",isAuth,getAllChats);
 ChatRoutes.post("/message",isAuth,cloudUpload.single("file"),sendMessage);
 ChatRoutes.get("/messages/chat/:id",isAuth,getMessagesbyChatId);
+// ChatRoutes.get("/messages",isAuth,getMessages);
 
 
 

@@ -98,23 +98,22 @@ export const getAllChats = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
 
 export const sendMessage = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
   const senderId = req.user?._id;
-    const { text, chatId } = req.body;
-  
+  const { text, chatId } = req.body;
+
   if (!senderId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-
- if (!mongoose.Types.ObjectId.isValid(senderId) ||!mongoose.Types.ObjectId.isValid(chatId)) {
+  if (
+    !mongoose.Types.ObjectId.isValid(senderId) ||
+    !mongoose.Types.ObjectId.isValid(chatId)
+  ) {
     return res.status(400).json({
       message: "Invalid MONGO Document(chatId||sender ID) ID",
     });
   }
 
-
-
-
-  const imageFile=req.file;
+  const imageFile = req.file;
   if (!text && !imageFile) {
     return res.status(400).json({
       message: "atleast there must be text or image",
@@ -136,82 +135,99 @@ export const sendMessage = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
   }
   let latestMessagetext = text;
 
-  let messageData:any = {
-    chatId:chatId,
+  let messageData: any = {
+    chatId: chatId,
     sender: senderId,
     messageType: "text",
   };
 
-  if(imageFile){
-      messageData.messageType="image"
-  latestMessagetext="image";
-  }else{}
+  if (imageFile) {
+    messageData.messageType = "image";
+    messageData.image = {
+      url: imageFile.path,
+      publicId: imageFile.filename,
+    };
+    latestMessagetext = "image";
+  } else {
+  }
 
-    messageData.text=text;
+  messageData.text = text;
 
   const message = await Message.create(messageData);
 
   const updatedChat = await chat.findByIdAndUpdate(
     chatId,
     {
-      latestMessage:{
-        text:latestMessagetext,
-        sender:senderId
+      latestMessage: {
+        text: latestMessagetext,
+        sender: senderId,
       },
-      updateAt:new Date()
+      updateAt: new Date(),
     },
     {
       new: true,
     },
   );
-res.json({
-    message:message,senderId,updatedChat
-
-})
-
-
-
-
-
+  res.json({
+    message: message,
+    senderId,
+    updatedChat,
+  });
 });
 
-
-export const getMessagesbyChatId = TRY_CATCH(async (req: AuthenticatedRequest, res) => {
-      const userId=req.user?._id;
-     const chatId=req.params.id;
-     console.log("GetessageRoute:",req.params.id,"\n");
-    if(!userId){
+export const getMessagesbyChatId = TRY_CATCH(
+  async (req: AuthenticatedRequest, res) => {
+    const userId = req.user?._id;
+     let { chatId, cursor, Limit } = req.query;
+    chatId = req.params.id;
+    if (!userId) {
       return res.status(401).json({
-        message:"Unauthorize"
-      })
+        message: "Unauthorized",
+      });
     }
-    
-    if(!chatId){
+    const limit= Limit || 20;
+
+
+    console.log("GetessageRoute:", req.params.id, "\n");
+    if (!userId) {
+      return res.status(401).json({
+        message: "Unauthorize",
+      });
+    }
+
+    if (!chatId) {
       res.status(400).json({
-        message:"chat id required"
-      })
-      return
+        message: "chat id required",
+      });
+      return;
     }
-  const Chat=await chat.findById(chatId);
-   
-    if(!Chat){
+    const Chat = await chat.findById(chatId);
+
+    if (!Chat) {
       res.status(404).json({
-        message:"chat not found"
-      })
-      return
+        message: "chat not found",
+      });
+      return;
     }
 
-    const isUserInChat= Chat.users.some((user)=> user.toString()===userId.toString());
-    if(!isUserInChat) return res.status(403).json({message: "You are not part of this conversation"})
+    const isUserInChat = Chat.users.some(
+      (user) => user.toString() === userId.toString(),
+    );
+    if (!isUserInChat)
+      return res
+        .status(403)
+        .json({ message: "You are not part of this conversation" });
 
-const otherUserId=Chat.users.filter((user)=> user!==userId)[0]?.toString().trim();
-console.log("other get message:", otherUserId);
-try {
+    const otherUserId = Chat.users
+      .filter((user) => user !== userId)[0]
+      ?.toString()
+      .trim();
+    console.log("other get message:", otherUserId);
+    try {
+      const token = req.cookies.accessToken;
+      console.log(token);
 
-  const token = req.cookies.accessToken
-  console.log(token)
- 
-const { data } = await axios.get(
+      const { data } = await axios.get(
         `${process.env.USER_SERVICE}/api/user/${otherUserId}`,
         {
           headers: {
@@ -221,41 +237,55 @@ const { data } = await axios.get(
       );
       console.log(data.user);
 
+      await Message.updateMany(
+        {
+          chatId: chatId,
+          sender: { $ne: userId },
+          seen: false,
+        },
+        { seen: true, seenAt: new Date() },
+      );
 
-
-      await Message.updateMany({
-        chatId:chatId,
-        sender:{$ne:userId},
-        seen:false
-      },{ seen:true,seenAt:new Date()}
    
-  )
-  const messages= await Message.find({
-    chatId:chatId
-  }).sort({updatedAt:1});
+      const {} = req.query;
+      const limit = (req.query.limit || 20) as string; // default to 20 messages per page
+      const query: any = { chatId };
 
+      // 🔥 pagination (older messages)
+      if (cursor) {
+        query._id = { $lt: new mongoose.Types.ObjectId(cursor as string) };
+      }
 
-  res.status(200).json({
-    messages:messages,
-    otherUser:{
-      _id:data.user._id,
-      name:data.user.name,
-      email:data.user.email,
+      const messages = await Message.find(query)
+        .sort({ _id: -1 }) // newest first
+        .limit(parseInt(limit));
+
+      // check if more messages exist
+      const hasMore = messages.length === parseInt(limit);
+
+      return res.status(200).json({
+        messages,
+        hasMore,
+      });
+
+      // const messages= await Message.find({
+      //   chatId:chatId
+      // }).sort({updatedAt:1});
+
+      res.status(200).json({
+        messages: messages,
+        otherUser: {
+          _id: data.user._id,
+          name: data.user.name,
+          email: data.user.email,
+        },
+      });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({
+        message: error.response.data.message || error,
+      });
     }
-  })
-
-
-} catch (error :any) {
-  console.log(error);
-  res.status(400).json({
-    message:error.response.data.message||error,
-  })
-  
-}
-
-
-
-
-
-}
+  },
 );
+
